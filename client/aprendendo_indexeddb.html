@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Aprendendo IndexedDB</title>
+</head>
+<body>
+    
+    <script src="js/app/model/Negociacao.js"></script>
+    <script src="js/app/services/ConnectionFactory.js"></script>
+
+    <script>
+
+        var conection;
+
+        ConnectionFactory.getConnection('negociacoes')
+            .then( connection => conection = connection)
+            .catch( error => console.log(error));        
+
+
+        function adiciona(){
+
+            let transaction = conection.transaction(['negociacoes'], 'readwrite');
+
+            let store = transaction.objectStore('negociacoes');
+
+            let negociacao = new Negociacao(new Date(), 1, 100);
+
+            let request = store.add(negociacao);
+
+            request.onsuccess = e => {
+
+                console.log('Negociacao adicionada com sucesso.');
+            }
+
+            request.onerror = e => {
+
+                console.log('Nao foi possivel adicionar a negociacao.');
+            }
+        }
+
+        function listaTodos(){
+
+            let transaction = conection.transaction(['negociacoes'], 'readwrite');
+
+            let store = transaction.objectStore('negociacoes');
+
+            let cursor = store.openCursor();
+
+            let negociacoes = [];
+
+            cursor.onsuccess = e => {
+
+                let atual = e.target.result;
+
+                if (atual) {
+
+                    let dado = atual.value;
+
+                    negociacoes.push(new Negociacao(dado._data, dado._quantidade, dado._valor));
+                    
+                    atual.continue();
+                } else {
+                    console.log(negociacoes);
+                }
+            }
+
+            cursor.onerror = e => {
+
+                console.log(e.target.error.name);
+            }
+        }
+
+    </script>
+
+</body>
+</html>
